@@ -1,0 +1,185 @@
+import x10.util.Timer;
+import x10.util.ArrayList;
+import x10.util.HashMap;
+
+/**
+ * This is the class that provides the solve() method.
+ *
+ * The assignment is to replace the contents of the solve() method
+ * below with code that actually works :-)
+ */
+public class Solver
+{
+    /**
+	   * solve(webGraph: Rail[WebNode], dampingFactor: double,epsilon:Double)
+	   * 
+     * Returns an approximation of the page rank of the given web graph
+     */
+    public def solve(webGraph: Rail[WebNode], dampingFactor: Double, epsilon:Double) : Rail[Double] {
+        
+        val n: double = webGraph.size;
+    	  var extra:long = 0;
+        
+    	  val sparseMatrix = graphToMatrix(webGraph);
+        var solutions:Rail[Double] = new Rail[Double](webGraph.size, (i:Long)=>1.0/webGraph.size);
+        //Console.OUT.println(solutions);
+        //prettyPrint(sparseMatrix); 
+       
+        Console.OUT.println("Matrix size: "+n+"x"+n);
+        Console.OUT.println("DampingFactor: "+dampingFactor);
+
+       
+        var count:long = 0; 
+        var newSolution: Rail[Double] = new Rail[Double](webGraph.size, (i:Long)=>0.0);
+        
+        while(true) {
+            Console.OUT.println(count);
+            count++;
+          
+
+            for (val i in solutions.range()) { 
+                
+                newSolution(i) = 0.0;
+                var update:double = 0.0;
+
+                for (val j in solutions.range()) {
+              
+                    var sum: double = (1-dampingFactor) / n;
+                    if (sparseMatrix(i).containsKey(j)) {
+                        sum += dampingFactor * sparseMatrix(i).get(j).value.prob;
+                    }
+
+                    update += (solutions(j) * sum);
+                }
+                newSolution(i) = update;
+            
+            
+            //Console.OUT.println("| [ "+solutions(i) + " ]");
+            }
+            //Console.OUT.println("Update: "+solutions);
+         
+          //Console.OUT.println("Eps: "+epsilon);
+          //Console.OUT.println("Distance: "+distance(solutions, newSolution));
+          //Console.OUT.println("Old Solution vctr: "+solution;
+          //Console.OUT.println("New Solution vctr: "+gNewSolution());
+         
+          val dist = distance(solutions, newSolution);
+          val swap = solutions;
+          solutions = newSolution;
+          newSolution = swap;
+          if (dist < epsilon) {
+          
+              Console.OUT.println("Distance: "+dist + " < " +epsilon);
+              Console.OUT.println("EXTRA ITERATION: "+extra);                
+              extra++;
+              if (extra >= 100) {
+      
+                  break;
+
+              }
+
+
+
+          } else {
+
+              Console.OUT.println("Distance: "+dist + " > " +epsilon);
+          }
+          //Console.OUT.println("New solution: "+newSolution);
+          //Console.OUT.println("Old solution: "+solutions);
+          //Console.OUT.println();
+          
+          
+
+          
+          
+        }
+
+
+
+        return solutions;
+    	}
+
+
+    public def graphToMatrix(webGraph: Rail[WebNode]) : Rail[HashMap[Long, NodeProb]] {
+  
+        var sparseMatrix: Rail[HashMap[Long, NodeProb]] = new  Rail[HashMap[Long, NodeProb]](webGraph.size, (i:long)=> new HashMap[Long, NodeProb]());
+        val totalLinks:double = webGraph.size;
+
+    
+        Console.OUT.println("Graph size");
+        Console.OUT.println(webGraph.size);
+        for (wn in webGraph) {
+            numLinks: double = wn.links.size();
+            //sparseMatrix(wn.id-1n) = new HashMap[Long, NodeProb]();
+      
+            if (numLinks >0) {
+                for (lwn in wn.links) {
+                    val prob: double = 1.0 / numLinks;        
+                    sparseMatrix(lwn.id-1).put(wn.id-1, new NodeProb(wn.id-1, prob));        
+        
+                }
+                
+            } else {
+                for (i in webGraph.range()) {
+                    val prob: double = 1.0 / totalLinks;        
+                    sparseMatrix(i).put(wn.id-1, new NodeProb(wn.id-1, prob));        
+                    
+
+                }
+
+            }
+
+        }
+    
+    
+    return sparseMatrix;
+
+  }
+
+
+
+
+  public def prettyPrint(sparseMatrix: Rail[HashMap[Long, NodeProb]]) {
+
+    for (val i in sparseMatrix.range()) {
+    
+      for (val j in sparseMatrix.range()) {
+        if (sparseMatrix(i).containsKey(j)) {
+          val prob: double = sparseMatrix(i).get(j).value.prob;
+          Console.OUT.print(String.format("%0.3f ", new Rail[Any](1, (i:long)=>prob)));
+        } else 
+          Console.OUT.print("0.000 ");
+    
+      }
+      Console.OUT.println();
+
+    }
+
+
+  }
+
+
+  public class NodeProb {
+    val id: long;
+    val prob: double;
+    def this(id: long, prob: double) {
+      this.id = id;
+      this.prob = prob;
+    }
+
+  }
+
+  public def distance(v1:Rail[Double], v2:Rail[Double]) : double {
+
+    var sum: double = 0;
+
+    for (i in v1.range()) {
+      sum += Math.pow(v1(i) - v2(i), 2);  
+
+    }
+
+    return Math.sqrt(sum);
+
+  }
+
+}
